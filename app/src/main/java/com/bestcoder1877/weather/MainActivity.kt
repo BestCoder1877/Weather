@@ -150,20 +150,49 @@ fun App(modifier: Modifier = Modifier) {
     var feelsLike by remember { mutableStateOf("__") }
     var weatherCode by remember { mutableIntStateOf(0) }
 
+    var selectedHour by remember { mutableIntStateOf(currentHour) }
+
     LaunchedEffect(lat, lon) {
         if (lat != 0.0 && lon != 0.0) {
             val url =
                 "https://api.open-meteo.com/v1/forecast" +
                         "?latitude=$lat" +
                         "&longitude=$lon" +
-                        "&current=temperature_2m,apparent_temperature,weather_code"
+                        "&hourly=temperature_2m,apparent_temperature,weather_code"
             val response = withContext(Dispatchers.IO) {
                 URL(url).readText()
             }
-            val current = JSONObject(response).getJSONObject("current")
-            weatherCode = current.getInt("weather_code")
-            temperature = current.getDouble("temperature_2m").toString()
-            feelsLike = current.getDouble("apparent_temperature").toString()
+            val hourly = JSONObject(response).getJSONObject("hourly")
+            val temps = hourly.getJSONArray("temperature_2m")
+            val feels = hourly.getJSONArray("apparent_temperature")
+            val codes = hourly.getJSONArray("weather_code")
+
+            val hourIndex = selectedHour.coerceIn(0 until temps.length())
+            temperature = temps.getString(hourIndex)
+            feelsLike = feels.getString(hourIndex)
+            weatherCode = codes.getInt(hourIndex)
+        }
+    }
+
+    LaunchedEffect(selectedHour, lat, lon) {
+        if (lat != 0.0 && lon != 0.0) {
+            val url =
+                "https://api.open-meteo.com/v1/forecast" +
+                        "?latitude=$lat" +
+                        "&longitude=$lon" +
+                        "&hourly=temperature_2m,apparent_temperature,weather_code"
+            val response = withContext(Dispatchers.IO) {
+                URL(url).readText()
+            }
+            val hourly = JSONObject(response).getJSONObject("hourly")
+            val temps = hourly.getJSONArray("temperature_2m")
+            val feels = hourly.getJSONArray("apparent_temperature")
+            val codes = hourly.getJSONArray("weather_code")
+
+            val hourIndex = selectedHour.coerceIn(0 until temps.length())
+            temperature = temps.getString(hourIndex)
+            feelsLike = feels.getString(hourIndex)
+            weatherCode = codes.getInt(hourIndex)
         }
     }
 
@@ -275,7 +304,8 @@ fun App(modifier: Modifier = Modifier) {
                         visualItemSize = 84.dp,
                         radiusPx = 800f,
                         density = LocalDensity.current,
-                        fontFamily = jetbrainsmono
+                        fontFamily = jetbrainsmono,
+                        onSelectedHour = { selectedHour = it }
                     )
 
 

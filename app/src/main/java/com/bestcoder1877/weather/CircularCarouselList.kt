@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
@@ -26,6 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -40,7 +42,8 @@ fun CircularCarouselList(
     visualItemSize: Dp,
     radiusPx: Float,
     density: Density,
-    fontFamily: FontFamily
+    fontFamily: FontFamily,
+    onSelectedHour: (Int) -> Unit = {}
 ) {
     LazyRow(
         state = lazyListState,
@@ -66,7 +69,9 @@ fun CircularCarouselList(
                 visualItemSize = visualItemSize,
                 radiusPx = radiusPx,
                 density = density,
-                fontFamily = fontFamily
+                fontFamily = fontFamily,
+                actualIndex = actualIndex,
+                onSelectedHour = onSelectedHour
             )
         }
     }
@@ -80,7 +85,9 @@ private fun CarouselItem(
     visualItemSize: Dp,
     radiusPx: Float,
     density: Density,
-    fontFamily: FontFamily
+    fontFamily: FontFamily,
+    actualIndex: Int,
+    onSelectedHour: (Int) -> Unit
 ) {
     var itemOffset by remember {
         mutableFloatStateOf(0f)
@@ -134,10 +141,10 @@ private fun CarouselItem(
                     radiusPx * cos(angle)
 
                 translationX =
-                    (circleX - distance).toFloat()
+                    (circleX - distance)
 
                 translationY =
-                    (-(radiusPx - circleY)).toFloat()
+                    (-(radiusPx - circleY))
 
                 val scale =
                     visualItemSize / itemSize
@@ -159,5 +166,18 @@ private fun CarouselItem(
                 textAlign = TextAlign.Center
             )
         )
+    }
+
+    LaunchedEffect(itemOffset, itemWidth, lazyListState, actualIndex) {
+        val viewportWidth =
+            lazyListState.layoutInfo.viewportSize.width.toFloat()
+        if (viewportWidth > 0 && itemWidth > 0) {
+            val viewportCenter = viewportWidth / 2f
+            val itemCenter = itemOffset + itemWidth / 2f
+            val distance = abs(itemCenter - viewportCenter)
+            if (distance <= itemWidth / 2f) {
+                onSelectedHour(actualIndex)
+            }
+        }
     }
 }
