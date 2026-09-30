@@ -39,6 +39,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -95,10 +96,17 @@ fun App(modifier: Modifier = Modifier) {
 
     var lat by remember { mutableDoubleStateOf(0.0) }
     var lon by remember { mutableDoubleStateOf(0.0) }
-
     val context = LocalContext.current
 
-    var currentHour = LocalDateTime.now().hour
+    var currentDateTime by remember { mutableStateOf(LocalDateTime.now()) }
+
+    var forecastTimes by remember {
+        mutableStateOf<List<LocalDateTime>>(emptyList())
+    }
+
+    var selectedHour by remember {
+        mutableIntStateOf(0)
+    }
 
     val locationPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -114,25 +122,37 @@ fun App(modifier: Modifier = Modifier) {
         }
     }
 
-    val hours = remember {
-        (0..23).map { hour ->
-            if (hour == currentHour) {
+
+    val hours = remember(forecastTimes, currentDateTime) {
+        forecastTimes.map { dateTime ->
+            if (
+                dateTime.toLocalDate() == currentDateTime.toLocalDate() &&
+                dateTime.hour == currentDateTime.hour
+            ) {
                 "NOW"
             } else {
                 val displayHour = when {
-                    hour == 0 -> 12
-                    hour > 12 -> hour - 12
-                    else -> hour
+                    dateTime.hour == 0 -> 12
+                    dateTime.hour > 12 -> dateTime.hour - 12
+                    else -> dateTime.hour
                 }
-                "$displayHour ${if (hour < 12) "AM" else "PM"}"
+
+                val day = when {
+                    dateTime.toLocalDate() == currentDateTime.toLocalDate() -> ""
+                    dateTime.toLocalDate() == currentDateTime.toLocalDate().plusDays(1) -> "TOM "
+                    else -> "${dateTime.dayOfWeek.name.take(3)} "
+                }
+
+                "$day$displayHour ${if (dateTime.hour < 12) "AM" else "PM"}"
             }
         }
     }
 
+
     LaunchedEffect(Unit) {
         while (true) {
-            currentHour = LocalDateTime.now().hour
-            val now = LocalDateTime.now()
+            currentDateTime = LocalDateTime.now()
+            val now = currentDateTime
             val secondsUntilNextHour =
                 (60 - now.minute) * 60 - now.second
             delay((secondsUntilNextHour * 1000L).milliseconds)
@@ -151,61 +171,117 @@ fun App(modifier: Modifier = Modifier) {
     var temperature by remember { mutableStateOf("__") }
     var feelsLike by remember { mutableStateOf("__") }
     var weatherCode by remember { mutableIntStateOf(0) }
-
-    var selectedHour by remember { mutableIntStateOf(currentHour) }
+    var temperatures by remember { mutableStateOf<List<String>>(emptyList()) }
+    var feels by remember { mutableStateOf<List<String>>(emptyList()) }
+    var codes by remember { mutableStateOf<List<Int>>(emptyList()) }
+    var currentTemperature by remember { mutableStateOf("__") }
+    var currentFeelsLike by remember { mutableStateOf("__") }
+    var currentWeatherCode by remember { mutableIntStateOf(0) }
 
     suspend fun refresh() {
-        if (lat != 0.0 && lon != 0.0) {
-            val url =
-                "https://api.open-meteo.com/v1/forecast" +
-                        "?latitude=$lat" +
-                        "&longitude=$lon" +
-                        "&hourly=temperature_2m,apparent_temperature,weather_code"
-            val response = withContext(Dispatchers.IO) {
-                URL(url).readText()
-            }
-            val hourly = JSONObject(response).getJSONObject("hourly")
-            val temps = hourly.getJSONArray("temperature_2m")
-            val feels = hourly.getJSONArray("apparent_temperature")
-            val codes = hourly.getJSONArray("weather_code")
-
-            val hourIndex = selectedHour.coerceIn(0 until temps.length())
-            temperature = temps.getString(hourIndex)
-            feelsLike = feels.getString(hourIndex)
-            weatherCode = codes.getInt(hourIndex)
+        if (lat == 0.0 && lon == 0.0) return
+        val url =
+            "https://api.open-meteo.com/v1/forecast" +
+                    "?latitude=$lat" +
+                    "&longitude=$lon" +
+                    "&current=temperature_2m,apparent_temperature,weather_code" +
+                    "&hourly=temperature_2m,apparent_temperature,weather_code" +
+                    "&forecast_days=7" +
+                    "&timezone=auto"
+        val response = withContext(Dispatchers.IO) {
+            URL(url).readText()
         }
+        val json = JSONObject(response)
+        val current = json.getJSONObject("current")
+        currentTemperature =
+            current.getDouble("temperature_2m").toString()
+        currentFeelsLike =
+            current.getDouble("apparent_temperature").toString()
+        currentWeatherCode =
+            current.getInt("weather_code")
+        val hourly = json.getJSONObject("hourly")
+        val times = hourly.getJSONArray("time")
+        val temps = hourly.getJSONArray("temperature_2m")
+        val feelsArray = hourly.getJSONArray("apparent_temperature")
+        val codesArray = hourly.getJSONArray("weather_code")
+
+        val newForecastTimes = (0 until times.length()).map {
+            LocalDateTime.parse(times.getString(it))
+        }
+
+        val newTemperatures = (0 until temps.length()).map {
+            temps.getString(it)
+        }
+
+        val newFeels = (0 until feelsArray.length()).map {
+            feelsArray.getString(it)
+        }
+
+        val newCodes = (0 until codesArray.length()).map {
+            codesArray.getInt(it)
+        }
+
+        forecastTimes = newForecastTimes
+        temperatures = newTemperatures
+        feels = newFeels
+        codes = newCodes
+
+
+        val now = LocalDateTime.now()
+
+        val currentIndex = newForecastTimes.indexOfFirst { time ->
+            time.year == now.year &&
+                    time.monthValue == now.monthValue &&
+                    time.dayOfMonth == now.dayOfMonth &&
+                    time.hour == now.hour
+        }
+
+        if (currentIndex >= 0) {
+            selectedHour = currentIndex
+        }
+
     }
 
     LaunchedEffect(lat, lon) {
         refresh()
     }
 
+
+    LaunchedEffect(
+        selectedHour,
+        forecastTimes,
+        currentTemperature,
+        currentFeelsLike,
+        currentWeatherCode
+    ) {
+        if (selectedHour in forecastTimes.indices) {
+
+            val selectedTime = forecastTimes[selectedHour]
+            val now = LocalDateTime.now()
+
+            val isNow =
+                selectedTime.year == now.year &&
+                        selectedTime.monthValue == now.monthValue &&
+                        selectedTime.dayOfMonth == now.dayOfMonth &&
+                        selectedTime.hour == now.hour
+
+            if (isNow) {
+                temperature = currentTemperature
+                feelsLike = currentFeelsLike
+                weatherCode = currentWeatherCode
+            } else {
+                temperature = temperatures[selectedHour]
+                feelsLike = feels[selectedHour]
+                weatherCode = codes[selectedHour]
+            }
+        }
+    }
+
+
     LaunchedEffect(Unit) {
         while (true) {
             delay(5.minutes)
             refresh()
-        }
-    }
-
-    LaunchedEffect(selectedHour, lat, lon) {
-        if (lat != 0.0 && lon != 0.0) {
-            val url =
-                "https://api.open-meteo.com/v1/forecast" +
-                        "?latitude=$lat" +
-                        "&longitude=$lon" +
-                        "&hourly=temperature_2m,apparent_temperature,weather_code"
-            val response = withContext(Dispatchers.IO) {
-                URL(url).readText()
-            }
-            val hourly = JSONObject(response).getJSONObject("hourly")
-            val temps = hourly.getJSONArray("temperature_2m")
-            val feels = hourly.getJSONArray("apparent_temperature")
-            val codes = hourly.getJSONArray("weather_code")
-
-            val hourIndex = selectedHour.coerceIn(0 until temps.length())
-            temperature = temps.getString(hourIndex)
-            feelsLike = feels.getString(hourIndex)
-            weatherCode = codes.getInt(hourIndex)
         }
     }
 
@@ -265,26 +341,27 @@ fun App(modifier: Modifier = Modifier) {
                         shape = CircleShape
                     )
             )
-            val currentHour = LocalDateTime.now().hour
+
+
             val lazyListState = rememberLazyListState()
-            LaunchedEffect(currentHour) {
-                val targetIndex = 1200 + currentHour
-                lazyListState.scrollToItem(
-                    index = targetIndex
-                )
-                val viewportWidth =
-                    lazyListState.layoutInfo.viewportSize.width
-                val itemWidth =
-                    lazyListState.layoutInfo.visibleItemsInfo
-                        .firstOrNull { it.index == targetIndex }
-                        ?.size
-                        ?: 0
+
+            LaunchedEffect(hours) {
+                if (hours.isEmpty()) return@LaunchedEffect
+                val targetIndex = 1200 + selectedHour.coerceIn(0, hours.lastIndex)
+                lazyListState.scrollToItem(targetIndex)
+                withFrameNanos { }
+                val viewportWidth = lazyListState.layoutInfo.viewportSize.width
+                val itemWidth = lazyListState.layoutInfo.visibleItemsInfo
+                    .firstOrNull { it.index == targetIndex }
+                    ?.size
+                    ?: 0
                 if (viewportWidth > 0 && itemWidth > 0) {
                     lazyListState.scrollBy(
                         -((viewportWidth - itemWidth) / 2f)
                     )
                 }
             }
+
 
             Box(
                 modifier = Modifier
@@ -296,15 +373,23 @@ fun App(modifier: Modifier = Modifier) {
             ) {
                 CircularCarouselList(
                     lazyListState = lazyListState,
-                    items = hours,
+                    items = if (hours.isNotEmpty()) hours else listOf(""),
                     itemSize = 84.dp,
                     visualItemSize = 84.dp,
                     radiusPx = 800f,
                     density = LocalDensity.current,
                     fontFamily = jetbrainsmono,
-                    onSelectedHour = { selectedHour = it }
+                    onSelectedHour = { index ->
+                        if (
+                            index in temperatures.indices &&
+                            index != selectedHour
+                        ) {
+                            selectedHour = index
+                        }
+                    }
                 )
             }
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
