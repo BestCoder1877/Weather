@@ -68,6 +68,7 @@ import org.json.JSONObject
 import java.net.URL
 import java.time.LocalDateTime
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -153,7 +154,7 @@ fun App(modifier: Modifier = Modifier) {
 
     var selectedHour by remember { mutableIntStateOf(currentHour) }
 
-    LaunchedEffect(lat, lon) {
+    suspend fun refresh() {
         if (lat != 0.0 && lon != 0.0) {
             val url =
                 "https://api.open-meteo.com/v1/forecast" +
@@ -172,6 +173,17 @@ fun App(modifier: Modifier = Modifier) {
             temperature = temps.getString(hourIndex)
             feelsLike = feels.getString(hourIndex)
             weatherCode = codes.getInt(hourIndex)
+        }
+    }
+
+    LaunchedEffect(lat, lon) {
+        refresh()
+    }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(5.minutes)
+            refresh()
         }
     }
 
