@@ -209,24 +209,8 @@ fun App(modifier: Modifier = Modifier) {
         }
     }
 
-    val background = when (weatherCode) {
-        0 -> R.drawable.clear
-        1 -> R.drawable.partly_cloudy
-        2 -> R.drawable.partly_cloudy
-        3 -> R.drawable.overcast
-        45, 48 -> R.drawable.fog
-        51, 53, 55,
-        56, 57,
-        61, 63, 65,
-        66, 67,
-        80, 81, 82 -> R.drawable.rain
+    val background = R.drawable.clear
 
-        71, 73, 75,
-        77, 85, 86 -> R.drawable.snow
-
-        95, 96, 99 -> R.drawable.storm
-        else -> R.drawable.clear
-    }
 
     val jetbrainsmono = FontFamily(
         Font(R.font.jetbrains_mono_regular)
@@ -259,6 +243,8 @@ fun App(modifier: Modifier = Modifier) {
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = 0.15f))
         )
+
+        WeatherEffects(weatherCode, Modifier.fillMaxSize())
 
         val scale by animateFloatAsState(
             targetValue = if (swiped) 10f else 1f,
@@ -348,9 +334,9 @@ fun App(modifier: Modifier = Modifier) {
                         textAlign = TextAlign.Center,
                     )
                 )
+
+
             }
-
-
         }
     }
 }
