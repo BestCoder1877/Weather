@@ -18,6 +18,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Box
@@ -40,6 +41,7 @@ import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
@@ -64,6 +66,7 @@ import androidx.compose.ui.unit.sp
 import com.bestcoder1877.weather.ui.theme.WeatherTheme
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -227,11 +230,36 @@ fun App(modifier: Modifier = Modifier) {
         label = ""
     )
 
+    val lazyListState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
             .pointerInput(Unit) {
                 detectVerticalDragGestures(onDragEnd = { swiped = !swiped }) { _, _ -> }
+            }
+            .pointerInput(Unit) {
+                detectTapGestures(onDoubleTap = {
+                    val now = LocalDateTime.now()
+                    val index = forecastTimes.indexOfFirst { time ->
+                        time.year == now.year && time.monthValue == now.monthValue && time.dayOfMonth == now.dayOfMonth && time.hour == now.hour
+                    }
+                    if (index >= 0) {
+                        selectedHour = index
+                        val targetIndex = 1200 + index
+                        scope.launch {
+                            lazyListState.scrollToItem(targetIndex)
+                            withFrameNanos { }
+                            val viewportWidth = lazyListState.layoutInfo.viewportSize.width
+                            val itemWidth =
+                                lazyListState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == targetIndex }?.size
+                                    ?: 0
+                            if (viewportWidth > 0 && itemWidth > 0) {
+                                lazyListState.scrollBy(-((viewportWidth - itemWidth) / 2f))
+                            }
+                        }
+                    }
+                })
             }) {
         Image(
             painter = painterResource(background),
@@ -260,7 +288,6 @@ fun App(modifier: Modifier = Modifier) {
                     .scale(scale)
                     .background(color = Color(0xFFC2D52D), shape = CircleShape)
             )
-            val lazyListState = rememberLazyListState()
             LaunchedEffect(hours) {
                 if (hours.isEmpty()) return@LaunchedEffect
                 val targetIndex = 1200 + selectedHour.coerceIn(0, hours.lastIndex)
