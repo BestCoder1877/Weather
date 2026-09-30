@@ -244,7 +244,7 @@ fun App(modifier: Modifier = Modifier) {
                     val index = forecastTimes.indexOfFirst { time ->
                         time.year == now.year && time.monthValue == now.monthValue && time.dayOfMonth == now.dayOfMonth && time.hour == now.hour
                     }
-                    if (index >= 0) {
+                    if (index >= 0 && index != selectedHour) {
                         selectedHour = index
                         val targetIndex = 1200 + index
                         scope.launch {
