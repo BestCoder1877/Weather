@@ -329,6 +329,30 @@ fun App(modifier: Modifier = Modifier) {
                         textAlign = TextAlign.Center
                     )
                 )
+                val selectedTime = forecastTimes.getOrNull(selectedHour) ?: currentDateTime
+                val now = LocalDateTime.now()
+                val dayLabel = when {
+                    selectedTime.toLocalDate() == now.toLocalDate() -> "Today"
+                    selectedTime.toLocalDate() == now.toLocalDate().plusDays(1) -> "Tomorrow"
+                    else -> selectedTime.dayOfWeek.name.take(3)
+                }
+                val hour12 = if (selectedTime.hour % 12 == 0) 12 else selectedTime.hour % 12
+                val amPm = if (selectedTime.hour < 12) "AM" else "PM"
+                Text(
+                    text = "$dayLabel at $hour12 $amPm",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 60.dp, bottom = 8.dp)
+                        .alpha(if (swiped) 1f else 0f),
+                    style = TextStyle(
+                        fontSize = 18.sp,
+                        fontFamily = jetbrainsmono,
+                        color = Color(0xFF1A1A1A),
+                        fontWeight = FontWeight(500),
+                        textAlign = TextAlign.Center,
+                        letterSpacing = 2.sp
+                    )
+                )
             }
         }
     }
