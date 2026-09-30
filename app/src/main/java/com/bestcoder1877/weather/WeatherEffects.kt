@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -22,9 +21,7 @@ fun ClearEffect(modifier: Modifier = Modifier) {
     val shimmer by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(3000)
-        ),
+        animationSpec = infiniteRepeatable(animation = tween(3000)),
         label = "clearShimmer"
     )
 
@@ -50,9 +47,7 @@ fun PartlyCloudyEffect(modifier: Modifier = Modifier) {
     val offset by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(20000, easing = androidx.compose.animation.core.LinearEasing)
-        ),
+        animationSpec = infiniteRepeatable(animation = tween(20000, easing = androidx.compose.animation.core.LinearEasing)),
         label = "cloudOffset"
     )
 
@@ -82,9 +77,7 @@ fun OvercastEffect(modifier: Modifier = Modifier) {
     val offset by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(4000, easing = androidx.compose.animation.core.LinearEasing)
-        ),
+        animationSpec = infiniteRepeatable(animation = tween(4000, easing = androidx.compose.animation.core.LinearEasing)),
         label = "overcastOffset"
     )
 
@@ -109,9 +102,7 @@ fun FogEffect(modifier: Modifier = Modifier) {
     val offset by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(8000, easing = androidx.compose.animation.core.LinearEasing)
-        ),
+        animationSpec = infiniteRepeatable(animation = tween(8000, easing = androidx.compose.animation.core.LinearEasing)),
         label = "fogOffset"
     )
 
@@ -133,9 +124,7 @@ fun RainEffect(modifier: Modifier = Modifier) {
     val offsetY by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(600, easing = androidx.compose.animation.core.LinearEasing)
-        ),
+        animationSpec = infiniteRepeatable(animation = tween(600, easing = androidx.compose.animation.core.LinearEasing)),
         label = "rainOffset"
     )
 
@@ -151,10 +140,9 @@ fun RainEffect(modifier: Modifier = Modifier) {
             val yOffset = (offsetY * visibleHeight) % visibleHeight
             val y = height * 0.6f + (yOffset + visibleHeight * (i % 100) / 100f) % visibleHeight
             val length = 20f + ((i % 15) * 1f)
-            val alpha = 1f
 
             drawLine(
-                color = Color.White.copy(alpha = alpha),
+                color = Color.White.copy(alpha = 1f),
                 start = Offset(x, y),
                 end = Offset(x - 3, (y + length) % height),
                 strokeWidth = 3f
@@ -169,9 +157,7 @@ fun SnowEffect(modifier: Modifier = Modifier) {
     val offsetY by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = androidx.compose.animation.core.LinearEasing)
-        ),
+        animationSpec = infiniteRepeatable(animation = tween(2000, easing = androidx.compose.animation.core.LinearEasing)),
         label = "snowOffset"
     )
 
@@ -189,10 +175,9 @@ fun SnowEffect(modifier: Modifier = Modifier) {
             val yOffset = (offsetY * visibleHeight) % visibleHeight
             val y = height * 0.6f + (yOffset + visibleHeight * (i % 50) / 50f) % visibleHeight
             val size = 3f + ((i % 4) * 1.5f)
-            val alpha = 0.8f
 
             drawCircle(
-                color = Color.White.copy(alpha = alpha),
+                color = Color.White.copy(alpha = 0.8f),
                 radius = size,
                 center = Offset(x, y)
             )
@@ -206,9 +191,7 @@ fun StormEffect(modifier: Modifier = Modifier) {
     val flash by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(5000)
-        ),
+        animationSpec = infiniteRepeatable(animation = tween(5000)),
         label = "lightning"
     )
 
@@ -216,10 +199,7 @@ fun StormEffect(modifier: Modifier = Modifier) {
         RainEffect(modifier = Modifier.fillMaxSize())
         Canvas(modifier = Modifier.fillMaxSize()) {
             if (flash > 0.98f) {
-                drawRect(
-                    color = Color.White.copy(alpha = 0.2f),
-                    size = size
-                )
+                drawRect(color = Color.White.copy(alpha = 0.2f), size = size)
             }
         }
     }
@@ -232,16 +212,8 @@ fun WeatherEffects(weatherCode: Int, modifier: Modifier = Modifier) {
         1, 2 -> PartlyCloudyEffect(modifier = modifier)
         3 -> OvercastEffect(modifier = modifier)
         45, 48 -> FogEffect(modifier = modifier)
-        in listOf(51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82) -> {
-            RainEffect(modifier = modifier)
-        }
-
-        in listOf(71, 73, 75, 77, 85, 86) -> {
-            SnowEffect(modifier = modifier)
-        }
-
-        in listOf(95, 96, 97, 99) -> {
-            StormEffect(modifier = modifier)
-        }
+        in listOf(51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82) -> RainEffect(modifier = modifier)
+        in listOf(71, 73, 75, 77, 85, 86) -> SnowEffect(modifier = modifier)
+        in listOf(95, 96, 97, 99) -> StormEffect(modifier = modifier)
     }
 }

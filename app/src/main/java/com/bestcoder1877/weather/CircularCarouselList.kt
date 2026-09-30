@@ -1,4 +1,4 @@
-package com.faskn.composeplayground.carousel
+package com.bestcoder1877.weather
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
@@ -36,32 +36,24 @@ import kotlin.math.sin
 fun CircularCarouselList(
     lazyListState: LazyListState,
     items: List<String>,
-    totalItems: Int = 2400,
-    startIndex: Int = 1200,
+    totalItems: Int,
+    startIndex: Int,
     itemSize: Dp,
     visualItemSize: Dp,
     radiusPx: Float,
     density: Density,
     fontFamily: FontFamily,
-    onSelectedHour: (Int) -> Unit = {}
+    onSelectedHour: (Int) -> Unit
 ) {
     LazyRow(
         state = lazyListState,
         modifier = Modifier.fillMaxSize(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
-        flingBehavior = rememberSnapFlingBehavior(
-            lazyListState = lazyListState
-        )
+        flingBehavior = rememberSnapFlingBehavior(lazyListState)
     ) {
-        items(
-            count = totalItems,
-            key = { it }
-        ) { index ->
-
-            val actualIndex =
-                (index - startIndex).mod(items.size)
-
+        items(count = totalItems, key = { it }) { index ->
+            val actualIndex = (index - startIndex).mod(items.size)
             CarouselItem(
                 text = items[actualIndex],
                 lazyListState = lazyListState,
@@ -89,72 +81,35 @@ private fun CarouselItem(
     actualIndex: Int,
     onSelectedHour: (Int) -> Unit
 ) {
-    var itemOffset by remember {
-        mutableFloatStateOf(0f)
-    }
-
-    var itemWidth by remember {
-        mutableFloatStateOf(0f)
-    }
+    var itemOffset by remember { mutableFloatStateOf(0f) }
+    var itemWidth by remember { mutableFloatStateOf(0f) }
 
     Box(
         modifier = Modifier
             .size(itemSize)
             .onPlaced { coordinates ->
-                itemOffset =
-                    coordinates.positionInParent().x
-
-                itemWidth =
-                    coordinates.size.width.toFloat()
+                itemOffset = coordinates.positionInParent().x
+                itemWidth = coordinates.size.width.toFloat()
             }
             .graphicsLayer {
-
-                val viewportWidth =
-                    lazyListState
-                        .layoutInfo
-                        .viewportSize
-                        .width
-                        .toFloat()
-
-                val viewportCenter =
-                    viewportWidth / 2f
-
-                val itemCenter =
-                    itemOffset + itemWidth / 2f
-
-                val distance =
-                    itemCenter - viewportCenter
-
-                val indexFromCenter =
-                    distance / itemWidth
-
-                val angleStep =
-                    itemWidth / radiusPx
-
-                val angle =
-                    indexFromCenter * angleStep
-
-                val circleX =
-                    radiusPx * sin(angle)
-
-                val circleY =
-                    radiusPx * cos(angle)
-
-                translationX =
-                    (circleX - distance)
-
-                translationY =
-                    (-(radiusPx - circleY))
-
-                val scale =
-                    visualItemSize / itemSize
-
-                scaleX = scale
-                scaleY = scale
-
+                val viewportWidth = lazyListState.layoutInfo.viewportSize.width.toFloat()
+                if (viewportWidth > 0 && itemWidth > 0) {
+                    val viewportCenter = viewportWidth / 2f
+                    val itemCenter = itemOffset + itemWidth / 2f
+                    val distance = itemCenter - viewportCenter
+                    val indexFromCenter = distance / itemWidth
+                    val angleStep = itemWidth / radiusPx
+                    val angle = indexFromCenter * angleStep
+                    val circleX = radiusPx * sin(angle)
+                    val circleY = radiusPx * cos(angle)
+                    
+                    translationX = circleX - distance
+                    translationY = -(radiusPx - circleY)
+                }
+                scaleX = visualItemSize / itemSize
+                scaleY = visualItemSize / itemSize
                 alpha = 1f
             },
-
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -169,8 +124,7 @@ private fun CarouselItem(
     }
 
     LaunchedEffect(itemOffset, itemWidth, lazyListState, actualIndex) {
-        val viewportWidth =
-            lazyListState.layoutInfo.viewportSize.width.toFloat()
+        val viewportWidth = lazyListState.layoutInfo.viewportSize.width.toFloat()
         if (viewportWidth > 0 && itemWidth > 0) {
             val viewportCenter = viewportWidth / 2f
             val itemCenter = itemOffset + itemWidth / 2f

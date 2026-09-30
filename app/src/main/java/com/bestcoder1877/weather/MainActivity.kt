@@ -60,7 +60,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bestcoder1877.weather.ui.theme.WeatherTheme
-import com.faskn.composeplayground.carousel.CircularCarouselList
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -78,9 +77,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             WeatherTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    App(
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                    App(modifier = Modifier.padding(innerPadding))
                 }
             }
         }
@@ -93,28 +90,16 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun App(modifier: Modifier = Modifier) {
     var swiped by remember { mutableStateOf(false) }
-
     var lat by remember { mutableDoubleStateOf(0.0) }
     var lon by remember { mutableDoubleStateOf(0.0) }
     val context = LocalContext.current
 
     var currentDateTime by remember { mutableStateOf(LocalDateTime.now()) }
+    var forecastTimes by remember { mutableStateOf<List<LocalDateTime>>(emptyList()) }
+    var selectedHour by remember { mutableIntStateOf(0) }
 
-    var forecastTimes by remember {
-        mutableStateOf<List<LocalDateTime>>(emptyList())
-    }
-
-    var selectedHour by remember {
-        mutableIntStateOf(0)
-    }
-
-    val locationPermission = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        val locationClient =
-            LocationServices.getFusedLocationProviderClient(context)
-
-        locationClient.lastLocation.addOnSuccessListener { location ->
+    val locationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { _ ->
+        LocationServices.getFusedLocationProviderClient(context).lastLocation.addOnSuccessListener { location ->
             if (location != null) {
                 lat = location.latitude
                 lon = location.longitude
@@ -122,13 +107,9 @@ fun App(modifier: Modifier = Modifier) {
         }
     }
 
-
     val hours = remember(forecastTimes, currentDateTime) {
         forecastTimes.map { dateTime ->
-            if (
-                dateTime.toLocalDate() == currentDateTime.toLocalDate() &&
-                dateTime.hour == currentDateTime.hour
-            ) {
+            if (dateTime.toLocalDate() == currentDateTime.toLocalDate() && dateTime.hour == currentDateTime.hour) {
                 "NOW"
             } else {
                 val displayHour = when {
@@ -136,36 +117,27 @@ fun App(modifier: Modifier = Modifier) {
                     dateTime.hour > 12 -> dateTime.hour - 12
                     else -> dateTime.hour
                 }
-
                 val day = when {
                     dateTime.toLocalDate() == currentDateTime.toLocalDate() -> ""
                     dateTime.toLocalDate() == currentDateTime.toLocalDate().plusDays(1) -> "TOM "
                     else -> "${dateTime.dayOfWeek.name.take(3)} "
                 }
-
                 "$day$displayHour ${if (dateTime.hour < 12) "AM" else "PM"}"
             }
         }
     }
 
-
     LaunchedEffect(Unit) {
         while (true) {
             currentDateTime = LocalDateTime.now()
             val now = currentDateTime
-            val secondsUntilNextHour =
-                (60 - now.minute) * 60 - now.second
+            val secondsUntilNextHour = (60 - now.minute) * 60 - now.second
             delay((secondsUntilNextHour * 1000L).milliseconds)
         }
     }
 
     LaunchedEffect(Unit) {
-        locationPermission.launch(
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            )
-        )
+        locationPermission.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
     }
 
     var temperature by remember { mutableStateOf("__") }
@@ -180,91 +152,36 @@ fun App(modifier: Modifier = Modifier) {
 
     suspend fun refresh() {
         if (lat == 0.0 && lon == 0.0) return
-        val url =
-            "https://api.open-meteo.com/v1/forecast" +
-                    "?latitude=$lat" +
-                    "&longitude=$lon" +
-                    "&current=temperature_2m,apparent_temperature,weather_code" +
-                    "&hourly=temperature_2m,apparent_temperature,weather_code" +
-                    "&forecast_days=7" +
-                    "&timezone=auto"
-        val response = withContext(Dispatchers.IO) {
-            URL(url).readText()
-        }
+        val url = "https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current=temperature_2m,apparent_temperature,weather_code&hourly=temperature_2m,apparent_temperature,weather_code&forecast_days=7&timezone=auto"
+        val response = withContext(Dispatchers.IO) { URL(url).readText() }
         val json = JSONObject(response)
         val current = json.getJSONObject("current")
-        currentTemperature =
-            current.getDouble("temperature_2m").toString()
-        currentFeelsLike =
-            current.getDouble("apparent_temperature").toString()
-        currentWeatherCode =
-            current.getInt("weather_code")
+        currentTemperature = current.getDouble("temperature_2m").toString()
+        currentFeelsLike = current.getDouble("apparent_temperature").toString()
+        currentWeatherCode = current.getInt("weather_code")
         val hourly = json.getJSONObject("hourly")
         val times = hourly.getJSONArray("time")
         val temps = hourly.getJSONArray("temperature_2m")
         val feelsArray = hourly.getJSONArray("apparent_temperature")
         val codesArray = hourly.getJSONArray("weather_code")
-
-        val newForecastTimes = (0 until times.length()).map {
-            LocalDateTime.parse(times.getString(it))
-        }
-
-        val newTemperatures = (0 until temps.length()).map {
-            temps.getString(it)
-        }
-
-        val newFeels = (0 until feelsArray.length()).map {
-            feelsArray.getString(it)
-        }
-
-        val newCodes = (0 until codesArray.length()).map {
-            codesArray.getInt(it)
-        }
-
-        forecastTimes = newForecastTimes
-        temperatures = newTemperatures
-        feels = newFeels
-        codes = newCodes
-
-
+        forecastTimes = (0 until times.length()).map { LocalDateTime.parse(times.getString(it)) }
+        temperatures = (0 until temps.length()).map { temps.getString(it) }
+        feels = (0 until feelsArray.length()).map { feelsArray.getString(it) }
+        codes = (0 until codesArray.length()).map { codesArray.getInt(it) }
         val now = LocalDateTime.now()
-
-        val currentIndex = newForecastTimes.indexOfFirst { time ->
-            time.year == now.year &&
-                    time.monthValue == now.monthValue &&
-                    time.dayOfMonth == now.dayOfMonth &&
-                    time.hour == now.hour
+        val currentIndex = forecastTimes.indexOfFirst { time ->
+            time.year == now.year && time.monthValue == now.monthValue && time.dayOfMonth == now.dayOfMonth && time.hour == now.hour
         }
-
-        if (currentIndex >= 0) {
-            selectedHour = currentIndex
-        }
-
+        if (currentIndex >= 0) selectedHour = currentIndex
     }
 
-    LaunchedEffect(lat, lon) {
-        refresh()
-    }
+    LaunchedEffect(lat, lon) { refresh() }
 
-
-    LaunchedEffect(
-        selectedHour,
-        forecastTimes,
-        currentTemperature,
-        currentFeelsLike,
-        currentWeatherCode
-    ) {
+    LaunchedEffect(selectedHour, forecastTimes, currentTemperature, currentFeelsLike, currentWeatherCode) {
         if (selectedHour in forecastTimes.indices) {
-
             val selectedTime = forecastTimes[selectedHour]
             val now = LocalDateTime.now()
-
-            val isNow =
-                selectedTime.year == now.year &&
-                        selectedTime.monthValue == now.monthValue &&
-                        selectedTime.dayOfMonth == now.dayOfMonth &&
-                        selectedTime.hour == now.hour
-
+            val isNow = selectedTime.year == now.year && selectedTime.monthValue == now.monthValue && selectedTime.dayOfMonth == now.dayOfMonth && selectedTime.hour == now.hour
             if (isNow) {
                 temperature = currentTemperature
                 feelsLike = currentFeelsLike
@@ -277,7 +194,6 @@ fun App(modifier: Modifier = Modifier) {
         }
     }
 
-
     LaunchedEffect(Unit) {
         while (true) {
             delay(5.minutes)
@@ -286,151 +202,41 @@ fun App(modifier: Modifier = Modifier) {
     }
 
     val background = R.drawable.clear
+    val jetbrainsmono = FontFamily(Font(R.font.jetbrains_mono_regular))
+    val textOffset by animateDpAsState(targetValue = if (swiped) 300.dp else 0.dp, animationSpec = tween(800), label = "")
 
-
-    val jetbrainsmono = FontFamily(
-        Font(R.font.jetbrains_mono_regular)
-    )
-    val textOffset by animateDpAsState(
-        targetValue = if (swiped) 300.dp else 0.dp,
-        animationSpec = tween(800),
-        label = ""
-    )
-
-    BoxWithConstraints(
-        modifier = modifier
-            .fillMaxSize()
-            .pointerInput(Unit) {
-                detectVerticalDragGestures(
-                    onDragEnd = { swiped = !swiped }
-                ) { _, _ -> }
-            }
-    ) {
-        Image(
-            painter = painterResource(background),
-            contentDescription = null,
-            modifier = Modifier
-                .fillMaxSize()
-                .blur(20.dp),
-            contentScale = ContentScale.Crop
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.15f))
-        )
-
+    BoxWithConstraints(modifier = modifier.fillMaxSize().pointerInput(Unit) {
+        detectVerticalDragGestures(onDragEnd = { swiped = !swiped }) { _, _ -> }
+    }) {
+        Image(painter = painterResource(background), contentDescription = null, modifier = Modifier.fillMaxSize().blur(20.dp), contentScale = ContentScale.Crop)
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.15f)))
         WeatherEffects(weatherCode, Modifier.fillMaxSize())
-
-        val scale by animateFloatAsState(
-            targetValue = if (swiped) 10f else 1f,
-            animationSpec = tween(800),
-            label = ""
-        )
-
-        Box(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(this@BoxWithConstraints.maxWidth * 10)
-                    .offset(y = -this@BoxWithConstraints.maxWidth / 2)
-                    .scale(scale)
-                    .background(
-                        color = Color(0xFFC2D52D),
-                        shape = CircleShape
-                    )
-            )
-
-
+        val scale by animateFloatAsState(targetValue = if (swiped) 10f else 1f, animationSpec = tween(800), label = "")
+        Box(modifier = Modifier.fillMaxSize()) {
+            Box(modifier = Modifier.size(this@BoxWithConstraints.maxWidth * 10).offset(y = -this@BoxWithConstraints.maxWidth / 2).scale(scale).background(color = Color(0xFFC2D52D), shape = CircleShape))
             val lazyListState = rememberLazyListState()
-
             LaunchedEffect(hours) {
                 if (hours.isEmpty()) return@LaunchedEffect
                 val targetIndex = 1200 + selectedHour.coerceIn(0, hours.lastIndex)
                 lazyListState.scrollToItem(targetIndex)
                 withFrameNanos { }
                 val viewportWidth = lazyListState.layoutInfo.viewportSize.width
-                val itemWidth = lazyListState.layoutInfo.visibleItemsInfo
-                    .firstOrNull { it.index == targetIndex }
-                    ?.size
-                    ?: 0
-                if (viewportWidth > 0 && itemWidth > 0) {
-                    lazyListState.scrollBy(
-                        -((viewportWidth - itemWidth) / 2f)
-                    )
-                }
+                val itemWidth = lazyListState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == targetIndex }?.size ?: 0
+                if (viewportWidth > 0 && itemWidth > 0) lazyListState.scrollBy(-((viewportWidth - itemWidth) / 2f))
             }
-
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(180.dp)
-                    .align(Alignment.BottomCenter)
-                    .offset(y = (-80).dp)
-                    .alpha(if (swiped) 0f else 1f)
-            ) {
-                CircularCarouselList(
-                    lazyListState = lazyListState,
-                    items = if (hours.isNotEmpty()) hours else listOf(""),
-                    itemSize = 84.dp,
-                    visualItemSize = 84.dp,
-                    radiusPx = 800f,
-                    density = LocalDensity.current,
-                    fontFamily = jetbrainsmono,
-                    onSelectedHour = { index ->
-                        if (
-                            index in temperatures.indices &&
-                            index != selectedHour
-                        ) {
-                            selectedHour = index
-                        }
-                    }
-                )
+            Box(modifier = Modifier.fillMaxWidth().height(180.dp).align(Alignment.BottomCenter).offset(y = (-80).dp).alpha(if (swiped) 0f else 1f)) {
+                CircularCarouselList(lazyListState = lazyListState, items = if (hours.isNotEmpty()) hours else listOf(""), totalItems = 2400, startIndex = 1200, itemSize = 84.dp, visualItemSize = 84.dp, radiusPx = 800f, density = LocalDensity.current, fontFamily = jetbrainsmono, onSelectedHour = { index -> if (index in temperatures.indices && index != selectedHour) selectedHour = index })
             }
-
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .offset(y = textOffset)
-            ) {
-                Text(
-                    text = "${temperature}°C",
-                    modifier = Modifier
-                        .padding(top = 200.dp)
-                        .fillMaxWidth(),
-                    style = TextStyle(
-                        fontSize = 96.sp,
-                        fontFamily = jetbrainsmono,
-                        color = Color.Black,
-                        fontWeight = FontWeight(400),
-                        textAlign = TextAlign.Center
-                    )
-                )
-                Text(
-                    text = "Feels Like ${feelsLike}°C",
-                    modifier = Modifier.fillMaxWidth(),
-                    style = TextStyle(
-                        fontSize = 20.sp,
-                        fontFamily = jetbrainsmono,
-                        fontWeight = FontWeight(400),
-                        color = Color.Black,
-                        textAlign = TextAlign.Center,
-                    )
-                )
-
-
+            Column(modifier = Modifier.fillMaxSize().offset(y = textOffset)) {
+                Text(text = "${temperature}°C", modifier = Modifier.padding(top = 200.dp).fillMaxWidth(), style = TextStyle(fontSize = 96.sp, fontFamily = jetbrainsmono, color = Color.Black, fontWeight = FontWeight(400), textAlign = TextAlign.Center))
+                Text(text = "Feels Like ${feelsLike}°C", modifier = Modifier.fillMaxWidth(), style = TextStyle(fontSize = 20.sp, fontFamily = jetbrainsmono, fontWeight = FontWeight(400), color = Color.Black, textAlign = TextAlign.Center))
             }
         }
     }
 }
 
-
 @Preview(showBackground = true)
 @Composable
 fun AppPreview() {
-    WeatherTheme {
-        App()
-    }
+    WeatherTheme { App() }
 }
