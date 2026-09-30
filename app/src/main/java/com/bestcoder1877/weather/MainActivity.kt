@@ -16,7 +16,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -41,6 +41,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
@@ -228,7 +229,7 @@ fun App(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxSize()
             .pointerInput(Unit) {
-                detectHorizontalDragGestures(
+                detectVerticalDragGestures(
                     onDragEnd = { swiped = !swiped }
                 ) { _, _ -> }
             }
@@ -266,50 +267,45 @@ fun App(modifier: Modifier = Modifier) {
                         shape = CircleShape
                     )
             )
-            if (!swiped) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(180.dp)
-                        .align(Alignment.BottomCenter)
-                        .offset(y = (-80).dp)
-                ) {
-
-
-                    val currentHour = LocalDateTime.now().hour
-                    val lazyListState = rememberLazyListState()
-                    LaunchedEffect(currentHour) {
-                        val targetIndex = 1200 + currentHour
-                        lazyListState.scrollToItem(
-                            index = targetIndex
-                        )
-                        val viewportWidth =
-                            lazyListState.layoutInfo.viewportSize.width
-                        val itemWidth =
-                            lazyListState.layoutInfo.visibleItemsInfo
-                                .firstOrNull { it.index == targetIndex }
-                                ?.size
-                                ?: 0
-                        if (viewportWidth > 0 && itemWidth > 0) {
-                            lazyListState.scrollBy(
-                                -((viewportWidth - itemWidth) / 2f)
-                            )
-                        }
-                    }
-
-                    CircularCarouselList(
-                        lazyListState = lazyListState,
-                        items = hours,
-                        itemSize = 84.dp,
-                        visualItemSize = 84.dp,
-                        radiusPx = 800f,
-                        density = LocalDensity.current,
-                        fontFamily = jetbrainsmono,
-                        onSelectedHour = { selectedHour = it }
+            val currentHour = LocalDateTime.now().hour
+            val lazyListState = rememberLazyListState()
+            LaunchedEffect(currentHour) {
+                val targetIndex = 1200 + currentHour
+                lazyListState.scrollToItem(
+                    index = targetIndex
+                )
+                val viewportWidth =
+                    lazyListState.layoutInfo.viewportSize.width
+                val itemWidth =
+                    lazyListState.layoutInfo.visibleItemsInfo
+                        .firstOrNull { it.index == targetIndex }
+                        ?.size
+                        ?: 0
+                if (viewportWidth > 0 && itemWidth > 0) {
+                    lazyListState.scrollBy(
+                        -((viewportWidth - itemWidth) / 2f)
                     )
-
-
                 }
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp)
+                    .align(Alignment.BottomCenter)
+                    .offset(y = (-80).dp)
+                    .alpha(if (swiped) 0f else 1f)
+            ) {
+                CircularCarouselList(
+                    lazyListState = lazyListState,
+                    items = hours,
+                    itemSize = 84.dp,
+                    visualItemSize = 84.dp,
+                    radiusPx = 800f,
+                    density = LocalDensity.current,
+                    fontFamily = jetbrainsmono,
+                    onSelectedHour = { selectedHour = it }
+                )
             }
             Column(
                 modifier = Modifier
