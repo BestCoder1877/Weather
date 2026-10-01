@@ -66,8 +66,9 @@ import androidx.compose.ui.unit.sp
 import com.bestcoder1877.weather.ui.theme.WeatherTheme
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.URL
@@ -95,6 +96,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun App(modifier: Modifier = Modifier) {
     var swiped by remember { mutableStateOf(false) }
+    var doneSwiping by remember { mutableStateOf(false) }
+    var doneUnSwiping by remember { mutableStateOf(true) }
     var lat by remember { mutableDoubleStateOf(0.0) }
     var lon by remember { mutableDoubleStateOf(0.0) }
     val context = LocalContext.current
@@ -230,6 +233,32 @@ fun App(modifier: Modifier = Modifier) {
         label = ""
     )
 
+    val carouselAlpha by animateFloatAsState(
+        targetValue = if (!swiped && doneUnSwiping) 1f else 0f,
+        animationSpec = tween(300),
+        label = ""
+    )
+
+    val subtextAlpha by animateFloatAsState(
+        targetValue = if (swiped && doneSwiping) 1f else 0f,
+        animationSpec = tween(300),
+        label = ""
+    )
+
+    LaunchedEffect(swiped, textOffset) {
+        val target = if (swiped) 300.dp else 0.dp
+        if (textOffset == target) {
+            delay(50)
+            if (swiped) {
+                doneSwiping = true
+                doneUnSwiping = false
+            } else {
+                doneUnSwiping = true
+                doneSwiping = false
+            }
+        }
+    }
+
     val lazyListState = rememberLazyListState()
     val scope = rememberCoroutineScope()
     BoxWithConstraints(
@@ -305,7 +334,7 @@ fun App(modifier: Modifier = Modifier) {
                     .height(180.dp)
                     .align(Alignment.BottomCenter)
                     .offset(y = (-80).dp)
-                    .alpha(if (swiped) 0f else 1f)
+                    .alpha(carouselAlpha)
             ) {
                 CircularCarouselList(
                     lazyListState = lazyListState,
@@ -370,7 +399,7 @@ fun App(modifier: Modifier = Modifier) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 60.dp, bottom = 8.dp)
-                        .alpha(if (swiped) 1f else 0f),
+                        .alpha(subtextAlpha),
                     style = TextStyle(
                         fontSize = 18.sp,
                         fontFamily = jetbrainsmono,
