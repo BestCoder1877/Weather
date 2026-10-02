@@ -162,6 +162,7 @@ fun App(modifier: Modifier = Modifier) {
     var temperatures by remember { mutableStateOf<List<String>>(emptyList()) }
     var feels by remember { mutableStateOf<List<String>>(emptyList()) }
     var codes by remember { mutableStateOf<List<Int>>(emptyList()) }
+    var precipitation by remember { mutableStateOf<List<String>>(emptyList()) }
     var currentTemperature by remember { mutableStateOf("__") }
     var currentFeelsLike by remember { mutableStateOf("__") }
     var currentWeatherCode by remember { mutableIntStateOf(0) }
@@ -169,7 +170,7 @@ fun App(modifier: Modifier = Modifier) {
     suspend fun refresh() {
         if (lat == 0.0 && lon == 0.0) return
         val url =
-            "https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current=temperature_2m,apparent_temperature,weather_code&hourly=temperature_2m,apparent_temperature,weather_code&forecast_days=7&timezone=auto"
+            "https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current=temperature_2m,apparent_temperature,weather_code&hourly=temperature_2m,apparent_temperature,weather_code,precipitation&forecast_days=7&timezone=auto"
         val response = withContext(Dispatchers.IO) { URL(url).readText() }
         val json = JSONObject(response)
         val current = json.getJSONObject("current")
@@ -181,10 +182,12 @@ fun App(modifier: Modifier = Modifier) {
         val temps = hourly.getJSONArray("temperature_2m")
         val feelsArray = hourly.getJSONArray("apparent_temperature")
         val codesArray = hourly.getJSONArray("weather_code")
+        val precipArray = hourly.getJSONArray("precipitation")
         forecastTimes = (0 until times.length()).map { LocalDateTime.parse(times.getString(it)) }
         temperatures = (0 until temps.length()).map { temps.getString(it) }
         feels = (0 until feelsArray.length()).map { feelsArray.getString(it) }
         codes = (0 until codesArray.length()).map { codesArray.getInt(it) }
+        precipitation = (0 until precipArray.length()).map { precipArray.getString(it) }
         val now = LocalDateTime.now()
         val currentIndex = forecastTimes.indexOfFirst { time ->
             time.year == now.year && time.monthValue == now.monthValue && time.dayOfMonth == now.dayOfMonth && time.hour == now.hour
@@ -385,6 +388,47 @@ fun App(modifier: Modifier = Modifier) {
                         textAlign = TextAlign.Center
                     )
                 )
+                val rainAmount = precipitation.getOrNull(selectedHour)?.toDoubleOrNull() ?: 0.0
+                if (swiped && rainAmount > 0.0) {
+                    val rainAlpha by animateFloatAsState(
+                        targetValue = if (doneSwiping) 1f else 0f,
+                        animationSpec = tween(300),
+                        label = ""
+                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 32.dp, vertical = 4.dp)
+                            .padding(top = 30.dp)
+                            .alpha(rainAlpha),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Rain $rainAmount mm",
+                            style = TextStyle(
+                                fontSize = 16.sp,
+                                fontFamily = jetbrainsmono,
+                                color = Color(0xFF1A1A1A),
+                                fontWeight = FontWeight(500),
+                                textAlign = TextAlign.Center
+                            )
+                        )
+                        val fraction = ((rainAmount / 10.0).coerceIn(0.0, 1.0)).toFloat()
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(8.dp)
+                                .background(Color(0xFF1A1A1A).copy(alpha = 0.15f))
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(fraction = fraction)
+                                    .height(8.dp)
+                                    .background(Color(0xFF2196F3))
+                            )
+                        }
+                    }
+                }
                 val selectedTime = forecastTimes.getOrNull(selectedHour) ?: currentDateTime
                 val now = LocalDateTime.now()
                 val dayLabel = when {
@@ -398,7 +442,7 @@ fun App(modifier: Modifier = Modifier) {
                     text = "$dayLabel at $hour12 $amPm",
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 60.dp, bottom = 8.dp)
+                        .padding(top = 30.dp, bottom = 8.dp)
                         .alpha(subtextAlpha),
                     style = TextStyle(
                         fontSize = 18.sp,
