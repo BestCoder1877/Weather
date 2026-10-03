@@ -162,7 +162,7 @@ fun App(modifier: Modifier = Modifier) {
     var temperatures by remember { mutableStateOf<List<String>>(emptyList()) }
     var feels by remember { mutableStateOf<List<String>>(emptyList()) }
     var codes by remember { mutableStateOf<List<Int>>(emptyList()) }
-    var precipitations by remember { mutableStateOf<List<String>>(emptyList()) }
+    var precipitation by remember { mutableStateOf<List<String>>(emptyList()) }
     var currentTemperature by remember { mutableStateOf("__") }
     var currentFeelsLike by remember { mutableStateOf("__") }
     var currentWeatherCode by remember { mutableIntStateOf(0) }
@@ -170,7 +170,7 @@ fun App(modifier: Modifier = Modifier) {
     suspend fun refresh() {
         if (lat == 0.0 && lon == 0.0) return
         val url =
-            "https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current=temperature_2m,apparent_temperature,weather_code&hourly=temperature_2m,apparent_temperature,weather_code,precipitation_probability&forecast_days=7&timezone=auto"
+            "https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current=temperature_2m,apparent_temperature,weather_code&hourly=temperature_2m,apparent_temperature,weather_code,precipitation&forecast_days=7&timezone=auto"
         val response = withContext(Dispatchers.IO) { URL(url).readText() }
         val json = JSONObject(response)
         val current = json.getJSONObject("current")
@@ -182,12 +182,12 @@ fun App(modifier: Modifier = Modifier) {
         val temps = hourly.getJSONArray("temperature_2m")
         val feelsArray = hourly.getJSONArray("apparent_temperature")
         val codesArray = hourly.getJSONArray("weather_code")
-        val precipArray = hourly.getJSONArray("precipitation_probability")
+        val precipArray = hourly.JSONArray("precipitation")
         forecastTimes = (0 until times.length()).map { LocalDateTime.parse(times.getString(it)) }
         temperatures = (0 until temps.length()).map { temps.getString(it) }
         feels = (0 until feelsArray.length()).map { feelsArray.getString(it) }
         codes = (0 until codesArray.length()).map { codesArray.getInt(it) }
-        precipitations = (0 until precipArray.length()).map { precipArray.getString(it) }
+        precipitation = (0 until precipArray.length()).map { precipArray.getString(it) }
         val now = LocalDateTime.now()
         val currentIndex = forecastTimes.indexOfFirst { time ->
             time.year == now.year && time.monthValue == now.monthValue && time.dayOfMonth == now.dayOfMonth && time.hour == now.hour
@@ -203,7 +203,7 @@ fun App(modifier: Modifier = Modifier) {
         currentTemperature,
         currentFeelsLike,
         currentWeatherCode,
-        precipitations
+        precipitation
     ) {
         if (selectedHour in forecastTimes.indices) {
             val selectedTime = forecastTimes[selectedHour]
@@ -360,7 +360,7 @@ fun App(modifier: Modifier = Modifier) {
                         }
                     })
             }
-            val precipText = precipitations.getOrNull(selectedHour) ?: "0"
+            val precipText = precipitation.getOrNull(selectedHour) ?: "0"
             Text(
                 text = "$precipText% chance of rain",
                 modifier = Modifier
