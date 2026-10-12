@@ -63,6 +63,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalConfiguration
 import com.bestcoder1877.weather.ui.theme.WeatherTheme
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.LocationRequest
@@ -99,6 +100,20 @@ class MainActivity : ComponentActivity() {
 @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
 @Composable
 fun App(modifier: Modifier = Modifier) {
+    val isTablet = LocalConfiguration.current.smallestScreenWidthDp >= 600
+    val itemSize = if (isTablet) 120.dp else 84.dp
+    val visualItemSize = if (isTablet) 120.dp else 84.dp
+    val radiusPx = if (isTablet) 1200f else 800f
+    val carouselVerticalOffset = if (isTablet) (-120).dp else (-80).dp
+    val carouselHeight = if (isTablet) 240.dp else 180.dp
+    val tempTextSize = if (isTablet) 144.sp else 96.sp
+    val subtextSize = if (isTablet) 24.sp else 18.sp
+    val feelsLikeSize = if (isTablet) 28.sp else 20.sp
+    val timeLabelSize = if (isTablet) 24.sp else 18.sp
+    val tempTopPadding = if (isTablet) 280.dp else 200.dp
+    val timeTopPadding = if (isTablet) 80.dp else 60.dp
+    val subtextTopPadding = if (isTablet) 260.dp else 200.dp
+
     var swiped by remember { mutableStateOf(false) }
     var doneSwiping by remember { mutableStateOf(false) }
     var doneUnSwiping by remember { mutableStateOf(true) }
@@ -203,7 +218,7 @@ fun App(modifier: Modifier = Modifier) {
         val temps = hourly.getJSONArray("temperature_2m")
         val feelsArray = hourly.getJSONArray("apparent_temperature")
         val codesArray = hourly.getJSONArray("weather_code")
-        val precipArray = hourly.JSONArray("precipitation")
+        val precipArray = hourly.getJSONArray("precipitation")
         forecastTimes = (0 until times.length()).map { LocalDateTime.parse(times.getString(it)) }
         temperatures = (0 until temps.length()).map { temps.getString(it) }
         feels = (0 until feelsArray.length()).map { feelsArray.getString(it) }
@@ -356,9 +371,9 @@ fun App(modifier: Modifier = Modifier) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp)
+                    .height(carouselHeight)
                     .align(Alignment.BottomCenter)
-                    .offset(y = (-80).dp)
+                    .offset(y = carouselVerticalOffset)
                     .alpha(carouselAlpha)
             ) {
                 CircularCarouselList(
@@ -366,9 +381,9 @@ fun App(modifier: Modifier = Modifier) {
                     items = hours.ifEmpty { listOf("") },
                     totalItems = 2400,
                     startIndex = 1200,
-                    itemSize = 84.dp,
-                    visualItemSize = 84.dp,
-                    radiusPx = 800f,
+                    itemSize = itemSize,
+                    visualItemSize = visualItemSize,
+                    radiusPx = radiusPx,
                     density = LocalDensity.current,
                     fontFamily = jetbrainsmono,
                     onSelectedHour = { index ->
@@ -386,10 +401,10 @@ fun App(modifier: Modifier = Modifier) {
                 text = "$precipText% chance of rain",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 200.dp)
+                    .padding(top = subtextTopPadding)
                     .alpha(subtextAlpha),
                 style = TextStyle(
-                    fontSize = 18.sp,
+                    fontSize = subtextSize,
                     fontFamily = jetbrainsmono,
                     color = Color(0xFF1A1A1A),
                     fontWeight = FontWeight(500),
@@ -405,10 +420,10 @@ fun App(modifier: Modifier = Modifier) {
                 Text(
                     text = "${temperature}°C",
                     modifier = Modifier
-                        .padding(top = 200.dp)
+                        .padding(top = tempTopPadding)
                         .fillMaxWidth(),
                     style = TextStyle(
-                        fontSize = 96.sp,
+                        fontSize = tempTextSize,
                         fontFamily = jetbrainsmono,
                         color = Color.Black,
                         fontWeight = FontWeight(400),
@@ -419,7 +434,7 @@ fun App(modifier: Modifier = Modifier) {
                     text = "Feels Like ${feelsLike}°C",
                     modifier = Modifier.fillMaxWidth(),
                     style = TextStyle(
-                        fontSize = 20.sp,
+                        fontSize = feelsLikeSize,
                         fontFamily = jetbrainsmono,
                         fontWeight = FontWeight(400),
                         color = Color.Black,
@@ -439,10 +454,10 @@ fun App(modifier: Modifier = Modifier) {
                     text = "$dayLabel at $hour12 $amPm",
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 60.dp, bottom = 8.dp)
+                        .padding(top = timeTopPadding, bottom = 8.dp)
                         .alpha(subtextAlpha),
                     style = TextStyle(
-                        fontSize = 18.sp,
+                        fontSize = timeLabelSize,
                         fontFamily = jetbrainsmono,
                         color = Color(0xFF1A1A1A),
                         fontWeight = FontWeight(500),
@@ -455,8 +470,14 @@ fun App(modifier: Modifier = Modifier) {
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, name = "Phone", device = "pixel_7")
 @Composable
-fun AppPreview() {
+fun AppPreviewPhone() {
+    WeatherTheme { App() }
+}
+
+@Preview(showBackground = true, name = "Tablet", device = "pixel_tablet")
+@Composable
+fun AppPreviewTablet() {
     WeatherTheme { App() }
 }
