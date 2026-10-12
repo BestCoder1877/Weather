@@ -65,6 +65,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bestcoder1877.weather.ui.theme.WeatherTheme
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationResult
+import android.os.Looper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -110,10 +114,27 @@ fun App(modifier: Modifier = Modifier) {
 
     val locationPermission =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { _ ->
-            LocationServices.getFusedLocationProviderClient(context).lastLocation.addOnSuccessListener { location ->
+            val fusedClient = LocationServices.getFusedLocationProviderClient(context)
+            fusedClient.lastLocation.addOnSuccessListener { location ->
                 if (location != null) {
                     lat = location.latitude
                     lon = location.longitude
+                } else {
+                    val locationRequest = LocationRequest.create().apply {
+                        priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+                        interval = 5000
+                        fastestInterval = 2000
+                        numUpdates = 1
+                    }
+                    fusedClient.requestLocationUpdates(locationRequest, object : LocationCallback() {
+                        override fun onLocationResult(locationResult: LocationResult) {
+                            locationResult.lastLocation?.let {
+                                lat = it.latitude
+                                lon = it.longitude
+                            }
+                            fusedClient.removeLocationUpdates(this)
+                        }
+                    }, Looper.getMainLooper())
                 }
             }
         }
