@@ -65,11 +65,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalConfiguration
 import com.bestcoder1877.weather.ui.theme.WeatherTheme
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationResult
-import android.os.Looper
+import android.location.Criteria
+import android.location.LocationManager
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -110,6 +108,7 @@ fun App(modifier: Modifier = Modifier) {
     val subtextSize = if (isTablet) 24.sp else 18.sp
     val feelsLikeSize = if (isTablet) 28.sp else 20.sp
     val timeLabelSize = if (isTablet) 24.sp else 18.sp
+    val circleSizeFactor = if (isTablet) 12f else 10f
     val tempTopPadding = if (isTablet) 280.dp else 200.dp
     val timeTopPadding = if (isTablet) 80.dp else 60.dp
     val subtextTopPadding = if (isTablet) 260.dp else 200.dp
@@ -128,28 +127,51 @@ fun App(modifier: Modifier = Modifier) {
     val vibrator = remember { context.getSystemService(Vibrator::class.java) }
 
     val locationPermission =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { _ ->
-            val fusedClient = LocationServices.getFusedLocationProviderClient(context)
-            fusedClient.lastLocation.addOnSuccessListener { location ->
-                if (location != null) {
-                    lat = location.latitude
-                    lon = location.longitude
-                } else {
-                    val locationRequest = LocationRequest.create().apply {
-                        priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-                        interval = 5000
-                        fastestInterval = 2000
-                        numUpdates = 1
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            val fine = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
+            val coarse = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+            if (fine || coarse) {
+                val manager = ContextCompat.getSystemService(context, LocationManager::class.java)
+                if (manager != null) {
+                    val provider = when {
+                        fine && manager.isProviderEnabled(LocationManager.GPS_PROVIDER) ->
+                            LocationManager.GPS_PROVIDER
+                        coarse && manager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ->
+                            LocationManager.NETWORK_PROVIDER
+                        manager.isProviderEnabled(LocationManager.GPS_PROVIDER) ->
+                            LocationManager.GPS_PROVIDER
+                        manager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ->
+                            LocationManager.NETWORK_PROVIDER
+                        else -> null
                     }
-                    fusedClient.requestLocationUpdates(locationRequest, object : LocationCallback() {
-                        override fun onLocationResult(locationResult: LocationResult) {
-                            locationResult.lastLocation?.let {
-                                lat = it.latitude
-                                lon = it.longitude
+                    if (provider != null) {
+                        val location = manager.getLastKnownLocation(provider)
+                        if (location != null) {
+                            lat = location.latitude
+                            lon = location.longitude
+                        } else {
+                            val criteria = Criteria().apply {
+                                accuracy = Criteria.ACCURACY_HIGH
+                                powerRequirement = Criteria.POWER_HIGH
                             }
-                            fusedClient.removeLocationUpdates(this)
+                            val bestProvider = manager.getBestProvider(criteria, true) ?: provider
+                            manager.requestLocationUpdates(
+                                bestProvider,
+                                2000L,
+                                0f,
+                                object : android.location.LocationListener {
+                                    override fun onLocationChanged(loc: android.location.Location) {
+                                        lat = loc.latitude
+                                        lon = loc.longitude
+                                        manager.removeUpdates(this)
+                                    }
+                                    override fun onStatusChanged(provider: String?, status: Int, extras: android.os.Bundle?) {}
+                                    override fun onProviderEnabled(provider: String) {}
+                                    override fun onProviderDisabled(provider: String) {}
+                                }
+                            )
                         }
-                    }, Looper.getMainLooper())
+                    }
                 }
             }
         }
@@ -352,7 +374,7 @@ fun App(modifier: Modifier = Modifier) {
         Box(modifier = Modifier.fillMaxSize()) {
             Box(
                 modifier = Modifier
-                    .size(this@BoxWithConstraints.maxWidth * 10)
+                    .size((this@BoxWithConstraints.maxWidth * circleSizeFactor).coerceAtMost(30000.dp))
                     .offset(y = -this@BoxWithConstraints.maxWidth / 2)
                     .scale(scale)
                     .background(color = Color(0xFFC2D52D), shape = CircleShape)
