@@ -1,6 +1,8 @@
 *.iml
 .gradle
 /local.properties
+run.sh
+run_tablet.sh
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml
