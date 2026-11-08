@@ -1,5 +1,5 @@
 ---
-Id: swipr
+Id: com.bestcoder1877.weather
 Name: swipr
 Summary: Weather swiped.
 Description: |
@@ -20,18 +20,22 @@ Description: |
 
 License: MIT
 Source: https://github.com/bestcoder1877/Weather
-Author: bestcoder1877
+Author: bestCoder1877
 Web: https://github.com/bestcoder1877/Weather
 Category: Weather
 Content Rating: Everyone
-AntiFeatures:
-- NonFreeAddons
 Requires: 24
+RepoType: git
+Repo: https://github.com/BestCoder1877/Weather.git
+UpdateCheckMode: Tags
+UpdateCheckData: 'app/build.gradle|versionCode\s*=\s*(\d+)|app/build.gradle|versionName\s*=\s*"([^"]+)"'
+CurrentVersion: '1.0'
+CurrentVersionCode: 1
 Builds:
-  - versionName: 1.0
+  - versionName: '1.0'
     versionCode: 1
-    build: 1
-    artifact: app/build/outputs/apk/debug/app-debug.apk
+    commit: v1.0
+    subdir: app
     screenshots:
       en-US:
         - screenshot/en-US/weather_main.png
