@@ -1,5 +1,4 @@
 ---
-Id: com.bestcoder1877.weather
 Name: swipr
 Summary: Weather swiped.
 Description: |
@@ -9,14 +8,13 @@ Description: |
   (Website Comming Soon)
 
 License: MIT
-Source: https://github.com/bestcoder1877/Weather
 AuthorName: bestCoder1877
 AuthorWebSite: https://github.com/bestcoder1877/Weather
-Web: https://github.com/bestcoder1877/Weather
+WebSite: https://github.com/bestcoder1877/Weather
+SourceCode: https://github.com/bestcoder1877/Weather
 IssueTracker: https://github.com/BestCoder1877/Weather/issues
-Category: Weather
-Content Rating: Everyone
-Requires: 24
+Categories:
+  - Weather
 RepoType: git
 Repo: https://github.com/BestCoder1877/Weather.git
 UpdateCheckMode: Tags
@@ -26,9 +24,5 @@ CurrentVersionCode: 1
 Builds:
   - versionName: '1.0'
     versionCode: 1
-    commit: e36b88c235e795271eca9525f6c086114230ae96
+    commit: 4eb5f6fe8aac4973e918b6645d68ecf782475fd2
     subdir: app
-    screenshots:
-      en-US:
-        - screenshot/en-US/weather_main.png
-        - screenshot/en-US/weather_swiped.png
