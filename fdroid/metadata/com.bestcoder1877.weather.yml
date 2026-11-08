@@ -1,4 +1,14 @@
+Categories:
+  - Weather
+License: MIT
+AuthorName: bestCoder1877
+AuthorWebSite: https://github.com/bestcoder1877/Weather
+WebSite: https://github.com/bestcoder1877/Weather
+SourceCode: https://github.com/bestcoder1877/Weather
+IssueTracker: https://github.com/BestCoder1877/Weather/issues
+
 Name: swipr
+AutoName: swipr
 Summary: Weather swiped
 Description: |
   swipr is a modern Android weather application built with Jetpack Compose.
@@ -6,25 +16,19 @@ Description: |
   Its kind of hard to describe so take a look at the screreenshots!
   (Website Comming Soon)
 
-License: MIT
-AuthorName: bestCoder1877
-AuthorWebSite: https://github.com/bestcoder1877/Weather
-WebSite: https://github.com/bestcoder1877/Weather
-SourceCode: https://github.com/bestcoder1877/Weather
-IssueTracker: https://github.com/BestCoder1877/Weather/issues
-Categories:
-  - Weather
 RepoType: git
 Repo: https://github.com/BestCoder1877/Weather.git
-AutoUpdateMode: Version
-UpdateCheckMode: Tags
-UpdateCheckData: 'app/build.gradle.kts|versionCode\s*=\s*(\d+)|app/build.gradle.kts|versionName\s*=\s*"([^"]+)"'
-CurrentVersion: '1.0'
-CurrentVersionCode: 1
+
 Builds:
   - versionName: '1.0'
     versionCode: 1
     commit: dbe8e62f695fb5959952ef6a6c97791f71b48d0d
+    subdir: app
     gradle:
       - yes
-    subdir: app
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+UpdateCheckData: app/build.gradle.kts|versionCode\s*=\s*(\d+)|app/build.gradle.kts|versionName\s*=\s*"([^"]+)"
+CurrentVersion: '1.0'
+CurrentVersionCode: 1
