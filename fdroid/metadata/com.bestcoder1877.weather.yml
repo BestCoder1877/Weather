@@ -29,7 +29,7 @@ Builds:
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-UpdateCheckData:
+UpdateCheckData: 
   app/build.gradle.kts|versionCode\s*=\s*(\d+)|app/build.gradle.kts|versionName\s*=\s*"([^"]+)"
 CurrentVersion: '1.0'
 CurrentVersionCode: 1
