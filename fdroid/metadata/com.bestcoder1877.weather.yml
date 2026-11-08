@@ -1,6 +1,5 @@
----
 Name: swipr
-Summary: Weather swiped.
+Summary: Weather swiped
 Description: |
   swipr is a modern Android weather application built with Jetpack Compose.
   The main interface features a circle that you can swipe along to change the hour.
@@ -17,13 +16,15 @@ Categories:
   - Weather
 RepoType: git
 Repo: https://github.com/BestCoder1877/Weather.git
+AutoUpdateMode: Version
 UpdateCheckMode: Tags
-UpdateCheckData: 'app/build.gradle|versionCode\s*=\s*(\d+)|app/build.gradle|versionName\s*=\s*"([^"]+)"'
+UpdateCheckData: 'app/build.gradle.kts|versionCode\s*=\s*(\d+)|app/build.gradle.kts|versionName\s*=\s*"([^"]+)"'
 CurrentVersion: '1.0'
 CurrentVersionCode: 1
 Builds:
   - versionName: '1.0'
     versionCode: 1
     commit: dbe8e62f695fb5959952ef6a6c97791f71b48d0d
-    gradle: yes
+    gradle:
+      - yes
     subdir: app
