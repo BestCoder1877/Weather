@@ -1,0 +1,1 @@
+Initial release of swipr, a colorful weather app powered by the Open-Meteo API. Shows current temperature, feels-like temperature, and an hourly forecast.

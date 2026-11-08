@@ -1,0 +1,14 @@
+swipr is a colorful, minimalist weather app built with Jetpack Compose.
+
+It shows the current temperature, "feels like" temperature, and an hourly forecast in a beautifully animated interface. Swipe vertically to reveal extra details like precipitation probability and formatted time/day labels, or double-tap to snap the carousel back to the current hour.
+
+The full-screen background uses real-time dynamic overlay effects — clear shimmer, floating clouds, rain, or snow — based on Open-Meteo weather codes, over a blurred backdrop.
+
+swipr uses your location to fetch live weather data from the free and open Open-Meteo API. No account, no tracking, no ads, and fully open source.
+
+Features:
+- Color-coded temperature background that changes with the weather
+- Feels-like temperature and chance of rain
+- Hourly forecast carousel with vibration feedback
+- Dynamic weather effects (clear, cloudy, rain, snow, storm)
+- Powered by the free Open-Meteo API

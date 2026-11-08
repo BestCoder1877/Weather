@@ -10,8 +10,10 @@ Description: |
 
 License: MIT
 Source: https://github.com/bestcoder1877/Weather
-Author: bestCoder1877
-Web: https://swipr.bestcoder1877.qzz.io
+AuthorName: bestCoder1877
+AuthorWebSite: https://github.com/bestcoder1877/Weather
+Web: https://github.com/bestcoder1877/Weather
+IssueTracker: https://github.com/BestCoder1877/Weather/issues
 Category: Weather
 Content Rating: Everyone
 Requires: 24
@@ -24,7 +26,7 @@ CurrentVersionCode: 1
 Builds:
   - versionName: '1.0'
     versionCode: 1
-    commit: v1.0
+    commit: e36b88c235e795271eca9525f6c086114230ae96
     subdir: app
     screenshots:
       en-US:
