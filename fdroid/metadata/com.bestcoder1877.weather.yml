@@ -3,25 +3,15 @@ Id: com.bestcoder1877.weather
 Name: swipr
 Summary: Weather swiped.
 Description: |
-  swipr is a visually engaging and modern Android weather application built with Jetpack Compose.
-
-  The main interface features a bold, minimalist design dominated by a smooth, animated lime-green circular focal element that displays the current temperature alongside the "Feels Like" temperature in a crisp monospaced font (JetBrains Mono).
-
-  At the bottom of the screen, an interactive circular carousel displays hourly forecast nodes. Swiping horizontally scrolls smoothly through the hours, providing real-time visual feedback and subtle haptics.
-
-  The full-screen background uses real-time dynamic overlay effects (such as clear shimmer, floating clouds, rain, or snow based on Open-Meteo weather codes) over a beautifully blurred backdrop.
-
-  Gestures & Controls:
-  - Vertical Swipe: Toggles an extended view showing additional details like precipitation probability percentage and formatted time/day labels.
-  - Double Tap: Snaps the carousel back to the current hour instantly.
-  - Hourly Carousel: Scroll through 7 days of hourly forecasts with smooth haptic feedback.
-
-  swipr uses your location to fetch live weather data from Open-Meteo and updates every 5 minutes. It is fully open-source, privacy-respecting, and free of ads or trackers.
+  swipr is a modern Android weather application built with Jetpack Compose.
+  The main interface features a circle that you can swipe along to change the hour.
+  Its kind of hard to describe so take a look at the screreenshots!
+  (Website Comming Soon)
 
 License: MIT
 Source: https://github.com/bestcoder1877/Weather
 Author: bestCoder1877
-Web: https://github.com/bestcoder1877/Weather
+Web: https://swipr.bestcoder1877.qzz.io
 Category: Weather
 Content Rating: Everyone
 Requires: 24
