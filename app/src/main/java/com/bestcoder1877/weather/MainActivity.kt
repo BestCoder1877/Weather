@@ -373,7 +373,8 @@ fun App(modifier: Modifier = Modifier) {
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = 0.15f))
         )
-        WeatherEffects(weatherCode, Modifier.fillMaxSize())
+        val precipValue = precipitation.getOrNull(selectedHour)?.toDoubleOrNull() ?: 0.0
+        WeatherEffects(weatherCode, Modifier.fillMaxSize(), precipValue)
         val scale by animateFloatAsState(
             targetValue = if (swiped) 10f else 1f,
             animationSpec = tween(800),

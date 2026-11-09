@@ -206,14 +206,17 @@ fun StormEffect(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun WeatherEffects(weatherCode: Int, modifier: Modifier = Modifier) {
+fun WeatherEffects(weatherCode: Int, modifier: Modifier = Modifier, precipitation: Double = 0.0) {
+    val isRaining = precipitation >= 20.0
     when (weatherCode) {
         0 -> ClearEffect(modifier = modifier)
         1, 2 -> PartlyCloudyEffect(modifier = modifier)
         3 -> OvercastEffect(modifier = modifier)
         45, 48 -> FogEffect(modifier = modifier)
-        in listOf(51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82) -> RainEffect(modifier = modifier)
+        in listOf(51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82) ->
+            if (isRaining) RainEffect(modifier = modifier) else OvercastEffect(modifier = modifier)
         in listOf(71, 73, 75, 77, 85, 86) -> SnowEffect(modifier = modifier)
-        in listOf(95, 96, 97, 99) -> StormEffect(modifier = modifier)
+        in listOf(95, 96, 97, 99) ->
+            if (isRaining) StormEffect(modifier = modifier) else OvercastEffect(modifier = modifier)
     }
 }
