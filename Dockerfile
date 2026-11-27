@@ -6,7 +6,8 @@ RUN apk add --no-cache \
     curl \
     zip \
     unzip \
-    openssh
+    openssh \
+    sed
 
 ENV ANDROID_HOME=/opt/android-sdk
 ENV PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
@@ -19,8 +20,8 @@ RUN mkdir -p $ANDROID_HOME/cmdline-tools && \
     rm /tmp/cmdline-tools.zip
 
 RUN yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install \
-    "platforms;android-37" \
-    "build-tools;33.0.2" \
+    "platforms;android-34" \
+    "build-tools;34.0.0" \
     "platform-tools" && \
     echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
 
@@ -33,6 +34,10 @@ COPY build.gradle.kts .
 COPY app ./app
 
 RUN chmod +x gradlew
+
+# Patch build.gradle.kts to use stable SDK 34 for CI build
+RUN sed -i 's/compileSdk { version = release(37) }/compileSdk = 34/' app/build.gradle.kts && \
+    sed -i 's/targetSdk = 37/targetSdk = 34/' app/build.gradle.kts
 
 # Build the release APK
 RUN ./gradlew :app:assembleRelease
