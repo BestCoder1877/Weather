@@ -7,7 +7,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unzip \
     openssh-client \
     ca-certificates \
-    jq \
     sed \
     && rm -rf /var/lib/apt/lists/*
 ENV ANDROID_HOME=/opt/android-sdk
@@ -31,6 +30,3 @@ COPY build.gradle.kts .
 COPY app ./app
 RUN chmod +x gradlew
 RUN ./gradlew :app:assembleRelease
-COPY deploy_to_github.sh .
-RUN chmod +x deploy_to_github.sh
-RUN ./deploy_to_github.sh
