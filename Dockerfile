@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unzip \
     openssh-client \
     ca-certificates \
+    jq \
     sed \
     && rm -rf /var/lib/apt/lists/*
 ENV ANDROID_HOME=/opt/android-sdk

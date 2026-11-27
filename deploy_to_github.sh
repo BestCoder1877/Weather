@@ -1,32 +1,46 @@
 #!/bin/bash
-set -e
+set -euo pipe_fail
+
 REPO="BestCoder1877/Weather"
-latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "0")
+
+if [ -z "${GITHUB_TOKEN:-}" ]; then
+  echo "GITHUB_TOKEN is required" >&2
+  exit 1
+fi
+
+latest_tag=$(curl -fsS \
+  -H "Authorization: token ${GITHUB_TOKEN}" \
+  -H "Accept: application/vnd.github+json" \
+  "https://api.github.com/repos/${REPO}/releases?per_page=100" |
+  jq -r '[.[].tag_name | select(startswith("v")) | ltrimstr("v") | select(test("^[0-9]+$")) | tonumber] | max // 0')
+
 new_tag_num=$((latest_tag + 1))
 new_tag="v${new_tag_num}"
-git config user.name "dockploy-ci"
-git config user.email "dockploy-ci@users.noreply.github.com"
-git tag -a "$new_tag" -m "Auto-generated release tag by Dockploy CI/CD"
-git push origin "$new_tag"
-commit_sha=$(git rev-parse HEAD)
-curl -s -X POST \
+
+commit_sha=$(curl -fsS \
+  -H "Authorization: token ${GITHUB_TOKEN}" \
+  -H "Accept: application/vnd.github+json" \
+  "https://api.github.com/repos/${REPO}/commits/master" |
+  jq -r '.sha')
+
+release_response=$(curl -fsS -X POST \
   -H "Authorization: token ${GITHUB_TOKEN}" \
   -H "Accept: application/vnd.github+json" \
   https://api.github.com/repos/$REPO/releases \
   -d "{
     \"tag_name\": \"${new_tag}\",
+    \"target_commitish\": \"master\",
     \"name\": \"Release ${new_tag}\",
     \"body\": \"### Auto-generated Release\\n\\nThis release was automatically created by the Dockploy CI/CD pipeline.\\n\\n**Commit**: \\\`${commit_sha}\\\`\\n**Generated**: \$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
     \"draft\": false,
     \"prerelease\": false
-}"
+}")
+
 apk_path="app/build/outputs/apk/release/app-release.apk"
 if [ -f "$apk_path" ]; then
-  release_id=$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
-    https://api.github.com/repos/$REPO/releases |
-    jq -r ".[] | select(.tag_name == \"${new_tag}\") | .id")
+  release_id=$(printf '%s' "$release_response" | jq -r '.id')
   if [ -n "$release_id" ] && [ "$release_id" != "null" ]; then
-    curl -s -X POST \
+    curl -fsS -X POST \
       -H "Authorization: token ${GITHUB_TOKEN}" \
       -H "Content-Type: application/octet-stream" \
       --data-binary "@${apk_path}" \
