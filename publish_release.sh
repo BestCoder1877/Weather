@@ -3,7 +3,7 @@ set -euo pipefail
 
 REPO="BestCoder1877/Weather"
 API="https://api.github.com/repos/${REPO}"
-: "${GITHUB_TOKEN:?Set the github_token build-time secret in Dokploy}"
+: "${GITHUB_TOKEN:?Set the GITHUB_TOKEN build-time secret in Dokploy}"
 
 apk_path="app/build/outputs/apk/release/app-release.apk"
 if [[ ! -f "$apk_path" ]]; then

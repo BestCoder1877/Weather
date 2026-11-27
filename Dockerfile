@@ -34,5 +34,5 @@ RUN chmod +x gradlew
 RUN ./gradlew :app:assembleRelease
 COPY publish_release.sh .
 RUN chmod +x publish_release.sh
-RUN --mount=type=secret,id=github_token,required=true \
-    GITHUB_TOKEN="$(cat /run/secrets/github_token)" ./publish_release.sh
+RUN --mount=type=secret,id=GITHUB_TOKEN,required=true \
+    GITHUB_TOKEN="$(cat /run/secrets/GITHUB_TOKEN)" ./publish_release.sh
