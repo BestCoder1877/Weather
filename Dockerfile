@@ -1,12 +1,14 @@
-FROM eclipse-temurin:25-jdk-alpine
-RUN apk add --no-cache \
+FROM eclipse-temurin:25-jdk
+RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     bash \
     curl \
     zip \
     unzip \
-    openssh \
-    sed
+    openssh-client \
+    ca-certificates \
+    sed \
+    && rm -rf /var/lib/apt/lists/*
 ENV ANDROID_HOME=/opt/android-sdk
 ENV PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
 ENV ANDROID_SDK_ROOT=$ANDROID_HOME
@@ -16,8 +18,8 @@ RUN mkdir -p $ANDROID_HOME/cmdline-tools && \
     mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest && \
     rm /tmp/cmdline-tools.zip
 RUN yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install \
-    "platforms;android-34" \
-    "build-tools;34.0.0" \
+    "platforms;android-37.0" \
+    "build-tools;36.0.0" \
     "platform-tools" && \
     echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
 WORKDIR /workspace
@@ -27,8 +29,6 @@ COPY settings.gradle.kts .
 COPY build.gradle.kts .
 COPY app ./app
 RUN chmod +x gradlew
-RUN sed -i 's/compileSdk { version = release(37) }/compileSdk = 34/' app/build.gradle.kts && \
-    sed -i 's/targetSdk = 37/targetSdk = 34/' app/build.gradle.kts
 RUN ./gradlew :app:assembleRelease
 COPY deploy_to_github.sh .
 RUN chmod +x deploy_to_github.sh
