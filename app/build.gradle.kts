@@ -33,6 +33,17 @@ android {
     buildFeatures {
         compose = true
     }
+
+    // Explicitly configure Java toolchain to use JDK 17
+    kotlinOptions {
+        jvmTarget = "11"
+    }
+}
+
+kotlin {
+    jvmToolchain {
+        (this as org.gradle.api.java.toolchain.JavaToolchainSpec).languageVersion.set(org.gradle.api.java.toolchain.JavaLanguageVersion.of(17))
+    }
 }
 
 dependencies {

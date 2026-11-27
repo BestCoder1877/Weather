@@ -40,7 +40,7 @@ RUN sed -i 's/compileSdk { version = release(37) }/compileSdk = 34/' app/build.g
     sed -i 's/targetSdk = 37/targetSdk = 34/' app/build.gradle.kts
 
 # Build the release APK
-RUN ./gradlew :app:assembleRelease
+RUN ./gradlew :app:assembleRelease --no-daemon
 
 # Run the deployment script
 COPY deploy_to_github.sh .
