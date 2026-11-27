@@ -30,3 +30,6 @@ COPY build.gradle.kts .
 COPY app ./app
 RUN chmod +x gradlew
 RUN ./gradlew :app:assembleRelease
+COPY deploy_to_github.sh .
+RUN chmod +x deploy_to_github.sh
+RUN ./deploy_to_github.sh
