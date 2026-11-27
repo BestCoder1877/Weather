@@ -5,11 +5,20 @@ REPO="BestCoder1877/Weather"
 API="https://api.github.com/repos/${REPO}"
 : "${GITHUB_TOKEN:?Set the GITHUB_TOKEN build-time secret in Dokploy}"
 
-apk_path="app/build/outputs/apk/release/app-release.apk"
-if [[ ! -f "$apk_path" ]]; then
-  echo "Release APK not found: $apk_path" >&2
+apk_dir="app/build/outputs/apk/release"
+if [[ ! -d "$apk_dir" ]]; then
+  echo "Release APK output directory not found: $apk_dir" >&2
   exit 1
 fi
+
+shopt -s nullglob
+apk_files=("$apk_dir"/*.apk)
+if (( ${#apk_files[@]} != 1 )); then
+  printf 'Expected one release APK in %s, found %d\n' "$apk_dir" "${#apk_files[@]}" >&2
+  printf 'Found: %s\n' "${apk_files[@]}" >&2
+  exit 1
+fi
+apk_path=${apk_files[0]}
 
 api() {
   curl -fsS \
