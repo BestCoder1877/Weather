@@ -18,11 +18,11 @@ RUN mkdir -p $ANDROID_HOME/cmdline-tools && \
     mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest && \
     rm /tmp/cmdline-tools.zip
 
-RUN yes | $ANDROID_HOME/cmdline-tools/latest/sdkmanager --install \
+RUN yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install \
     "platforms;android-37" \
     "build-tools;33.0.2" \
     "platform-tools" && \
-    echo "y" | $ANDROID_HOME/cmdline-tools/latest/sdkmanager --licenses
+    echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
 
 WORKDIR /workspace
 
